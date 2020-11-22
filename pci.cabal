@@ -1,39 +1,49 @@
 cabal-version:      2.4
 name:               pci
 version:            0.1.0.0
-
--- A short (one-line) description of the package.
--- synopsis:
-
--- A longer description of the package.
--- description:
-
--- A URL where users can report bugs.
--- bug-reports:
-
--- The license under which the package is released.
+synopsis:           A library for accessing PCI devices
+description:        This library enables you to access PCI devices.
+                    It is implemented as a high-level wrapper around
+                    @bindings-libpci@
+                    (<https://hackage.haskell.org/package/bindings-libpci>)
+                    which is a low-level binding to the C library:
+                    @libpci@ (<https://github.com/pciutils/pciutils>)
+                    For an example how to use this library see Example.hs
+                    which mirrors the example given in the pciutils github repo.
+bug-reports:        https://github.com/standardsemiconductor/pci/issues
 license:            BSD-3-Clause
 license-file:       LICENSE                   
 author:             dopamane
 maintainer:         dwc1295@gmail.com
-
--- A copyright notice.
--- copyright:
-category:           FFI
+copyright:          2020 Standard Semiconductor <standard.semiconductor@gmail.com>
+category:           System, Hardware
 extra-source-files:
     CHANGELOG.md
     README.md
 
-executable pci
-    main-is:          Main.hs
-
-    -- Modules included in this executable, other than Main.
-    -- other-modules:
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    build-depends:    base ^>=4.14.0.0,
+source-repository head
+                  type: git
+                  location: git://github.com/standardsemiconductor/pci.git
+    
+executable example
+    main-is:          Example.hs
+    build-depends:    base            ^>=4.14.0.0,
+                      pci             ^>=0.1.0.0,
                       bindings-libpci ^>=0.1.0.0
     hs-source-dirs:   app
     ghc-options: -Wall
     default-language: Haskell2010
+
+library
+        exposed-modules: System.Pci
+        other-modules: System.Pci.Access,
+                       System.Pci.Device,
+                       System.Pci.Device.Fill
+        build-depends: base            ^>=4.14.0.0,
+                       bindings-libpci ^>=0.1.0.0                       
+        hs-source-dirs: src
+        default-extensions: DerivingStrategies,
+                            GeneralizedNewtypeDeriving
+        ghc-options: -Wall
+        default-language: Haskell2010
+                       
