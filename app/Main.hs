@@ -2,11 +2,13 @@ module Main where
 
 import Control.Exception (finally)
 import Data.Bits ((.|.))
-import Data.Word (Word8, Word16, Word32)
+import Data.Word
 import Foreign.Marshal.Alloc (alloca)
 import Foreign.Ptr (Ptr, nullPtr)
-import Foreign.Storable (peek)
+import Foreign.Storable
 import Foreign.C.Types
+import Foreign.C.String
+import Foreign.Marshal.Alloc
 import Text.Printf
 import Control.Monad
 
@@ -14,25 +16,17 @@ import Bindings.Libpci.Pci
 import Bindings.Libpci.Header
 
 main :: IO ()
-main = do
-  putStrLn "Hello, PCI!"
-  withAccess $ \access -> do
-    putStrLn "Using PCI!"
-    devices <- getDevices access
-    forM_ devices $ \d -> printf "device=%x\n" (deviceId d)
-{-
-    c'pci_fill_info devices fillFlags
-    c <- c'pci_read_byte devices c'PCI_INTERRUPT_PIN
-    print c
-    vendorId <- c'vendor_id devices
-    deviceId <- c'device_id devices
-    name <- c'pci_lookup_name pacc namebuf (sizeOf nameBuf) c'PCI_LOOKUP_DEVICE vendorId deviceId
-    print name
--}
-  putStrLn "Goodbye, PCI!"
-  where
-    fillFlags :: CInt
-    fillFlags = c'PCI_FILL_IDENT .|. c'PCI_FILL_BASES .|. c'PCI_FILL_CLASS
+main = withAccess $ \acc -> do
+  devices <- getDevices acc
+  forM_ devices $ \d -> do
+    void $ fillInfo d $ c'PCI_FILL_IDENT .|. c'PCI_FILL_BASES .|. c'PCI_FILL_CLASS
+    c <- readByte d c'PCI_INTERRUPT_PIN
+    printf
+      "%04x:%02x:%02x.%d vendor=%04x device=%04x class=%04x irq=%d (pin %d) base0=%lx"
+      (domain d) (bus d) (dev d) (func d) (vendorId d) (deviceId d) (deviceClass d)
+      (irq d) c (head $ baseAddr d)
+    name <- lookupName acc d $ c'PCI_LOOKUP_DEVICE
+    printf " (%s)\n" name
   
 newtype Access = Access { accessPtr :: Ptr C'pci_access }
 
@@ -57,8 +51,29 @@ data Device = Device
   , deviceId    :: !Word16
   , deviceClass :: !Word16
   , irq         :: !Int
+  , baseAddr    :: ![Word64]
   , domain      :: !Int
   }
+
+mkDevice :: Access -> Ptr C'pci_dev -> IO Device
+mkDevice acc pciDevPtr = do
+  pciDev <- peek pciDevPtr
+  return $ Device
+    { access      = acc
+    , devicePtr   = pciDevPtr
+    , next        = c'pci_dev'next         pciDev
+    , domain16    = fromIntegral $ c'pci_dev'domain_16    pciDev
+    , bus         = fromIntegral $ c'pci_dev'bus          pciDev
+    , dev         = fromIntegral $ c'pci_dev'dev          pciDev
+    , func        = fromIntegral $ c'pci_dev'func         pciDev
+    , knownFields = fromIntegral $ c'pci_dev'known_fields pciDev
+    , vendorId    = fromIntegral $ c'pci_dev'vendor_id    pciDev
+    , deviceId    = fromIntegral $ c'pci_dev'device_id    pciDev
+    , deviceClass = fromIntegral $ c'pci_dev'device_class pciDev
+    , irq         = fromIntegral $ c'pci_dev'irq          pciDev
+    , baseAddr    = fromIntegral <$> c'pci_dev'base_addr  pciDev
+    , domain      = fromIntegral $ c'pci_dev'domain       pciDev
+    }
 
 getDevices :: Access -> IO [Device]
 getDevices acc = do
@@ -95,22 +110,12 @@ getDevices acc = do
 fillInfo :: Device -> CInt -> IO Word32
 fillInfo device flags = fromIntegral <$> c'pci_fill_info (devicePtr device) flags
 
-mkDevice :: Access -> Ptr C'pci_dev -> IO Device
-mkDevice acc pciDevPtr = do
-  pciDev <- peek pciDevPtr
-  return $ Device
-    { access      = acc
-    , devicePtr   = pciDevPtr
-    , next        = c'pci_dev'next         pciDev
-    , domain16    = fromIntegral $ c'pci_dev'domain_16    pciDev
-    , bus         = fromIntegral $ c'pci_dev'bus          pciDev
-    , dev         = fromIntegral $ c'pci_dev'dev          pciDev
-    , func        = fromIntegral $ c'pci_dev'func         pciDev
-    , knownFields = fromIntegral $ c'pci_dev'known_fields pciDev
-    , vendorId    = fromIntegral $ c'pci_dev'vendor_id    pciDev
-    , deviceId    = fromIntegral $ c'pci_dev'device_id    pciDev
-    , deviceClass = fromIntegral $ c'pci_dev'device_class pciDev
-    , irq         = fromIntegral $ c'pci_dev'irq          pciDev
-    , domain      = fromIntegral $ c'pci_dev'domain       pciDev
-    }
+readByte :: Device -> CInt -> IO Word8
+readByte device = fmap fromIntegral . c'pci_read_byte (devicePtr device)
 
+lookupName :: Access -> Device -> CInt -> IO String
+lookupName acc device flags = allocaBytes 1024 $ \nb ->
+  peekCString =<< c'pci_lookup_name (accessPtr acc) nb 1024 flags vid did
+  where
+    vid = fromIntegral $ vendorId device
+    did = fromIntegral $ deviceId device
