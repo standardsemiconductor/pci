@@ -23,6 +23,24 @@ import Data.Bits ((.|.))
 import Bindings.Libpci.Pci
 import System.Pci.Access (Access, accessPtr)
 
+-- From pci.h
+{-
+/*
+ *	Conversion of PCI ID's to names (according to the pci.ids file)
+ *
+ *	Call pci_lookup_name() to identify different types of ID's:
+ *
+ *	VENDOR				(vendorID) -> vendor
+ *	DEVICE				(vendorID, deviceID) -> device
+ *	VENDOR | DEVICE			(vendorID, deviceID) -> combined vendor and device
+ *	SUBSYSTEM | VENDOR		(subvendorID) -> subsystem vendor
+ *	SUBSYSTEM | DEVICE		(vendorID, deviceID, subvendorID, subdevID) -> subsystem device
+ *	SUBSYSTEM | VENDOR | DEVICE	(vendorID, deviceID, subvendorID, subdevID) -> combined subsystem v+d
+ *	SUBSYSTEM | ...			(-1, -1, subvendorID, subdevID) -> generic subsystem
+ *	CLASS				(classID) -> class
+ *	PROGIF				(classID, progif) -> programming interface
+ */
+-}
 lookupName :: Access -> LookupMode -> CInt -> CInt -> CInt -> CInt -> IO String
 lookupName acc (LookupMode lm) w x y z = allocaBytes 1024 $ \nb ->
   peekCString =<< c'pci_lookup_name (accessPtr acc) nb 1024 lm w x y z
