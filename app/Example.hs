@@ -1,6 +1,5 @@
 import Text.Printf
 import Control.Monad
-import Bindings.Libpci.Pci
 import Bindings.Libpci.Header
 import System.Pci
 
@@ -14,5 +13,5 @@ main = withAccess $ \acc -> do
       "%04x:%02x:%02x.%d vendor=%04x device=%04x class=%04x irq=%d (pin %d) base0=%lx"
       (domain d) (bus d) (dev d) (func d) (vendorId d) (deviceId d) (deviceClass d)
       (irq d) c (head $ baseAddr d)
-    name <- lookupName acc d $ c'PCI_LOOKUP_DEVICE
+    name <- lookupName acc lookupDevice (fromIntegral $ vendorId d) (fromIntegral $ deviceId d) 0 0 
     printf " (%s)\n" name

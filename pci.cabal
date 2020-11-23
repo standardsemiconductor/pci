@@ -37,6 +37,7 @@ executable example
 library
         exposed-modules: System.Pci
         other-modules: System.Pci.Access,
+                       System.Pci.Access.Lookup,
                        System.Pci.Device,
                        System.Pci.Device.Fill
         build-depends: base            ^>=4.14.0.0,

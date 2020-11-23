@@ -3,7 +3,6 @@ module System.Pci.Device
   , devicePtr
   , getDevices
   , readByte
-  , lookupName
   , bus
   , dev
   , func
@@ -17,8 +16,6 @@ module System.Pci.Device
 
 import Data.Word
 import Foreign.C.Types
-import Foreign.C.String
-import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.Storable
 import System.Pci.Access
@@ -77,10 +74,3 @@ getDevices acc = do
 
 readByte :: Device -> CInt -> IO Word8
 readByte device = fmap fromIntegral . c'pci_read_byte (devicePtr device)
-
-lookupName :: Access -> Device -> CInt -> IO String
-lookupName acc device flags = allocaBytes 1024 $ \nb ->
-  peekCString =<< c'pci_lookup_name (accessPtr acc) nb 1024 flags vid did
-  where
-    vid = fromIntegral $ vendorId device
-    did = fromIntegral $ deviceId device
