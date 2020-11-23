@@ -27,8 +27,8 @@ source-repository head
     
 executable example
     main-is:          Example.hs
-    build-depends:    base            ^>=4.14.0.0,
-                      bindings-libpci ^>=0.1.0.0,
+    build-depends:    base            >=4.14 && < 4.15,
+                      bindings-libpci >=0.1 && < 0.2,
                       pci
     hs-source-dirs:   example
     ghc-options: -Wall
@@ -39,9 +39,10 @@ library
         other-modules: System.Pci.Access,
                        System.Pci.Access.Lookup,
                        System.Pci.Device,
-                       System.Pci.Device.Fill
-        build-depends: base            ^>=4.14.0.0,
-                       bindings-libpci ^>=0.1.0.0                       
+                       System.Pci.Device.Fill,
+                       System.Pci.Device.Description
+        build-depends: base            >=4.14 && < 4.15,
+                       bindings-libpci >=0.1 && < 0.2                       
         hs-source-dirs: src
         default-extensions: DerivingStrategies,
                             GeneralizedNewtypeDeriving

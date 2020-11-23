@@ -1,2 +1,2 @@
 # pci
-Communicate with PCI devices
+A library for accessing PCI devices.

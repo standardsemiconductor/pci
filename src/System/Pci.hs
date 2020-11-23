@@ -7,9 +7,12 @@ module System.Pci
   , module System.Pci.Device
     -- Fill
   , module System.Pci.Device.Fill
+    -- Description
+  , module System.Pci.Device.Description
   ) where
 
 import System.Pci.Access
 import System.Pci.Access.Lookup
 import System.Pci.Device hiding (devicePtr)
 import System.Pci.Device.Fill
+import System.Pci.Device.Description
