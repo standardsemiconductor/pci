@@ -6,12 +6,6 @@ import Foreign.Storable
 import Bindings.Libpci.Pci
 import System.Pci.Access (Access, accessPtr)
 
-data Param = Param
-  { param :: String
-  , value :: String
-  , help  :: String
-  } deriving Show
-
 getParam :: Access -> String -> IO String
 getParam acc p = withCString p $ \pCStr ->
   peekCString =<< c'pci_get_param (accessPtr acc) pCStr
@@ -23,15 +17,22 @@ setParam acc p v = withCString p $ \pCStr ->
     return $ if status == 0
       then Nothing
       else Just "No such parameter"
+
+newtype Param = Param { paramPtr :: Ptr C'pci_param }
+
+param :: Param -> IO String
+param = (peekCString =<<) . peek . p'pci_param'param . paramPtr
+
+value :: Param -> IO String
+value = (peekCString =<<) . peek . p'pci_param'value . paramPtr
+
+help :: Param -> IO String
+help = (peekCString =<<) . peek . p'pci_param'help . paramPtr
     
-getParams :: Access -> IO [Param]
-getParams acc = go nullPtr
+listParams :: Access -> IO [Param]
+listParams acc = go nullPtr
   where
     go prevPtr = do
-      paramPtr <- c'pci_walk_params (accessPtr acc) prevPtr
-      (:) <$> mkParam paramPtr <*> go paramPtr
-    mkParam ptr = do
-      p <- peekCString =<< peek (p'pci_param'param ptr)
-      v <- peekCString =<< peek (p'pci_param'value ptr)
-      h <- peekCString =<< peek (p'pci_param'help  ptr)
-      return $ Param p v h
+      pPtr <- c'pci_walk_params (accessPtr acc) prevPtr
+      (Param pPtr :) <$> go pPtr
+
