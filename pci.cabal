@@ -41,7 +41,9 @@ library
                        System.Pci.Access.Parameter,
                        System.Pci.Device,
                        System.Pci.Device.Fill,
-                       System.Pci.Device.Description
+                       System.Pci.Device.Description,
+                       System.Pci.Device.Capability,
+                       System.Pci.Filter
         build-depends: base            >=4.14 && < 4.15,
                        bindings-libpci >=0.1 && < 0.2                       
         hs-source-dirs: src

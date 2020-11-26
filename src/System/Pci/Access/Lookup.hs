@@ -1,5 +1,7 @@
 module System.Pci.Access.Lookup
   ( lookupName
+  , setNameListPath
+  , idCacheFlush
   , LookupMode
   , lookupVendor
   , lookupDevice
@@ -44,6 +46,13 @@ import System.Pci.Access (Access, accessPtr)
 lookupName :: Access -> LookupMode -> CInt -> CInt -> CInt -> CInt -> IO String
 lookupName acc (LookupMode lm) w x y z = allocaBytes 1024 $ \nb ->
   peekCString =<< c'pci_lookup_name (accessPtr acc) nb 1024 lm w x y z
+
+setNameListPath :: Access -> String -> Int -> IO ()
+setNameListPath acc name toBeFreed = withCString name $ \nameCStr ->
+  c'pci_set_name_list_path (accessPtr acc) nameCStr $ fromIntegral toBeFreed
+
+idCacheFlush :: Access -> IO ()
+idCacheFlush = c'pci_id_cache_flush . accessPtr
 
 newtype LookupMode = LookupMode { unLookupMode :: C'pci_lookup_mode }
 

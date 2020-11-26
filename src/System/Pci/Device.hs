@@ -1,6 +1,7 @@
 module System.Pci.Device
   ( Device
   , devicePtr
+  , deviceAccess
   , getDevices
   , readByte
   , readWord
@@ -11,8 +12,12 @@ module System.Pci.Device
   , writeWord
   , writeLong
   , writeBlock
+  , getDevice
+  , freeDevice
+  , withDevice
   ) where
 
+import Control.Exception (finally)
 import Data.Word
 import Foreign.C.Types
 import Foreign.Ptr
@@ -22,19 +27,9 @@ import System.Pci.Access
 import Bindings.Libpci.Pci
 
 data Device = Device
-  { access      :: !Access
-  , devicePtr   :: !(Ptr C'pci_dev)
-  , next        :: !(Ptr C'pci_dev)
+  { deviceAccess :: !Access
+  , devicePtr    :: !(Ptr C'pci_dev)
   }
-
-mkDevice :: Access -> Ptr C'pci_dev -> IO Device
-mkDevice acc pciDevPtr = do
-  pciDev <- peek pciDevPtr
-  return $ Device
-    { access    = acc
-    , devicePtr = pciDevPtr
-    , next      = c'pci_dev'next pciDev
-    }
 
 getDevices :: Access -> IO [Device]
 getDevices acc = do
@@ -46,8 +41,9 @@ getDevices acc = do
     go devPtr
       | devPtr == nullPtr = return []
       | otherwise = do
-          d <- mkDevice acc devPtr
-          (d :) <$> go (next d)
+          nextPtr <- peek $ p'pci_dev'next devPtr
+          let d = Device acc devPtr
+          (d :) <$> go nextPtr
 
 readByte :: Device -> CInt -> IO Word8
 readByte device = fmap fromIntegral . c'pci_read_byte (devicePtr device)
@@ -102,3 +98,15 @@ writeBlock device pos block = allocaArray len $ \bufPtr -> do
     else Just "writeBlock error"
   where
     len = length block
+
+-- Raw access to specified device
+getDevice :: Access -> CInt -> CInt -> CInt -> CInt -> IO Device
+getDevice acc dom bus dev func = Device acc <$> c'pci_get_dev (accessPtr acc) dom bus dev func
+
+freeDevice :: Device -> IO ()
+freeDevice d = c'pci_free_dev $ devicePtr d
+
+withDevice :: Access -> CInt -> CInt -> CInt -> CInt -> (Device -> IO a) -> IO a
+withDevice acc dom bus dev func k = do
+  d <- getDevice acc dom bus dev func
+  finally (k d) $ freeDevice d
