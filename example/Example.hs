@@ -1,6 +1,5 @@
 import Text.Printf
 import Control.Monad
-import Bindings.Libpci.Header
 import System.Pci
 
 main :: IO ()
