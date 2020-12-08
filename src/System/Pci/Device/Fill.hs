@@ -51,7 +51,7 @@ fillModuleAlias :: Fill
 fillLabel       :: Fill
 fillNumaNode    :: Fill
 fillIOFlags     :: Fill
-fillDTNode      :: Fill
+--fillDTNode      :: Fill
 fillRescan      :: Fill
 
 fillIdent       = c'PCI_FILL_IDENT
@@ -67,5 +67,5 @@ fillModuleAlias = c'PCI_FILL_MODULE_ALIAS
 fillLabel       = c'PCI_FILL_LABEL
 fillNumaNode    = c'PCI_FILL_NUMA_NODE
 fillIOFlags     = c'PCI_FILL_IO_FLAGS
-fillDTNode      = c'PCI_FILL_DT_NODE
+--fillDTNode      = c'PCI_FILL_DT_NODE
 fillRescan      = c'PCI_FILL_RESCAN
