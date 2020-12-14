@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module System.Pci.Device.Capability where
 
 import Data.Word
@@ -11,5 +12,7 @@ newtype Capability = Capability { capabilityPtr :: Ptr C'pci_cap }
 findCap :: Device -> Word32 -> Word32 -> IO Capability
 findCap device capId capType = Capability <$> c'pci_find_cap (devicePtr device) (fromIntegral capId) (fromIntegral capType)
 
+#ifdef MIN_VERSION_LIBPCI_3_6_3
 findCapNR :: Device -> Word32 -> Word32 -> Ptr CUInt -> IO Capability
 findCapNR device capId capType capNumber = Capability <$> c'pci_find_cap_nr (devicePtr device) (fromIntegral capId) (fromIntegral capType) capNumber 
+#endif
