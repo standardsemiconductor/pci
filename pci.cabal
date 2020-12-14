@@ -46,7 +46,7 @@ library
                        System.Pci.Filter,
                        System.Pci.Header
         build-depends: base            >=4.12 && < 4.15,
-                       bindings-libpci >=0.3 && < 0.4                       
+                       bindings-libpci >=0.4 && < 0.5                       
         hs-source-dirs: src
         default-extensions: DerivingStrategies,
                             GeneralizedNewtypeDeriving
