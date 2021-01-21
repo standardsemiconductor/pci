@@ -46,6 +46,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        sudo apt-get update
         sudo apt-get install libpci-dev
         cabal update
         cabal build --only-dependencies --enable-tests --enable-benchmarks --constraint="bindings-libpci ${{ matrix.os.libpci }}"
