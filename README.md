@@ -6,3 +6,9 @@ A library for accessing PCI devices.
 ```
 cabal build --constraint="bindings-libpci +libpci-vvv"
 ```
+
+## Example
+```
+cabal run --constraint="bindings-libpci +libpci-vvv"
+```
+This will print a description of each connected PCI device.
